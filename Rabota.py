@@ -9,7 +9,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Игра: Волк, коза и капуста")
         self.setGeometry(100, 100, 400, 200)
 
-        self.status_label = QLabel("Подайте волку, козе и капусте на другой берег, нажимая кнопку объекта, затем 'Лодка' и 'Перевезти'.", self)
+        self.status_label = QLabel("Перевезите волка, козу и капусту на другой берег, нажимая на объект, затем 'Перевезти'.", self)
         self.status_label.setGeometry(20, 20, 360, 50)
 
         self.btn_wolf = QPushButton("Волк", self)
@@ -24,80 +24,62 @@ class MainWindow(QMainWindow):
         self.btn_cabbage.setGeometry(280, 90, 100, 30)
         self.btn_cabbage.clicked.connect(lambda: self.put_in_boat("cabbage"))
 
-        self.btn_boat = QPushButton("Лодка", self)
-        self.btn_boat.setGeometry(20, 130, 100, 30)
-        self.btn_boat.clicked.connect(self.move_boat)
-        self.btn_boat.setEnabled(True)
-
         self.btn_transport = QPushButton("Перевезти", self)
         self.btn_transport.setGeometry(150, 130, 100, 30)
         self.btn_transport.clicked.connect(self.move_objects)
         self.btn_transport.setEnabled(False)
 
-        self.current_side = {"wolf": True, "goat": True, "cabbage": True, "boat": True}
-        self.opposite_side = {"wolf": False, "goat": False, "cabbage": False, "boat": False}
+        self.btn_restart = QPushButton("Начать сначала", self)
+        self.btn_restart.setGeometry(280, 130, 100, 30)
+        self.btn_restart.clicked.connect(self.restart_game)
+        self.btn_restart.setVisible(False)
 
-        self.objects_to_move = []
+        self.initialize_game()
 
-        self.boat_clicked = False
+    def initialize_game(self):
+        self.left_bank = {"wolf", "goat", "cabbage"}  # Начальное состояние левого берега
+        self.right_bank = set()  # Правый берег пустой
+        self.boat = set()  # Лодка пуста
+        self.status_label.setText("Перевезите волка, козу и капусту на другой берег, нажимая на объект, затем 'Перевезти'.")
+        self.btn_transport.setEnabled(False)
+        self.btn_restart.setVisible(False)
 
     def put_in_boat(self, obj):
-        if self.boat_clicked:
-            if len(self.objects_to_move) < 2:
-                if obj not in self.objects_to_move:
-                    if self.current_side[obj] == self.current_side["boat"]:
-                        self.objects_to_move.append(obj)
-                        self.status_label.setText("Объект {} посажен в лодку.".format(obj.capitalize()))
-                    else:
-                        self.status_label.setText("Объект {} на противоположном берегу.".format(obj.capitalize()))
-                else:
-                    self.status_label.setText("Объект {} уже в лодке.".format(obj.capitalize()))
-            else:
-                self.status_label.setText("Лодка переполнена!")
-            if len(self.objects_to_move) > 0:
+        if obj in self.left_bank:
+            if len(self.boat) < 2:  # Проверяем, есть ли свободное место на лодке
+                self.left_bank.remove(obj)
+                self.boat.add(obj)
+                self.status_label.setText(f"Объект {obj.capitalize()} посажен в лодку.")
                 self.btn_transport.setEnabled(True)
+            else:
+                self.status_label.setText("Лодка уже занята!")
         else:
-            self.status_label.setText("Сначала нажмите 'Лодка'.")
-
-    def move_boat(self):
-        self.boat_clicked = True
-        self.btn_boat.setEnabled(False)
-        self.update_status()
+            self.status_label.setText(f"Объект {obj.capitalize()} на противоположном берегу.")
 
     def move_objects(self):
-        if len(self.objects_to_move) > 0:
-            for obj in self.objects_to_move:
-                if self.current_side[obj] == self.current_side["boat"]:
-                    if obj != "boat":
-                        if "wolf" in self.objects_to_move and "goat" in self.objects_to_move and "cabbage" not in self.objects_to_move:
-                            self.status_label.setText("Волк съест козу!")
-                            return
-                        elif "goat" in self.objects_to_move and "cabbage" in self.objects_to_move and "wolf" not in self.objects_to_move:
-                            self.status_label.setText("Коза съест капусту!")
-                            return
-                        else:
-                            self.current_side[obj] = not self.current_side[obj]
-                            self.opposite_side[obj] = not self.opposite_side[obj]
-                            self.current_side["boat"] = not self.current_side["boat"]
-                            self.opposite_side["boat"] = not self.opposite_side["boat"]
-                else:
-                    self.status_label.setText("Объект {} уже на противоположном берегу.".format(obj.capitalize()))
-            self.update_status()
-            self.objects_to_move.clear()
-            self.boat_clicked = False
+        if self.boat:
+            for obj in self.boat:
+                self.right_bank.add(obj)
+            self.boat.clear()
             self.btn_transport.setEnabled(False)
-            self.btn_boat.setEnabled(True)
+            self.check_game_status()
+        else:
+            self.status_label.setText("Лодка пуста. Сначала посадите объект в лодку.")
+
+    def check_game_status(self):
+        if not self.left_bank and not self.boat:  # Если левый берег и лодка пусты, игрок выиграл
+            self.status_label.setText("Поздравляем! Вы выиграли!")
+            return
+
+        if ("goat" in self.left_bank and "cabbage" in self.left_bank) or \
+           ("goat" in self.right_bank and "cabbage" in self.right_bank):  # Проверяем условие поражения
+            self.status_label.setText("Неверный ход! Коза съела капусту. Попробуйте еще раз.")
+            self.btn_restart.setVisible(True)
         else:
             self.status_label.setText("Выберите объект для перемещения.")
 
-    def update_status(self):
-        if all(value == False for value in self.current_side.values()):
-            self.status_label.setText("Поздравляем! Вы выиграли!")
-        elif (self.current_side["goat"] == self.current_side["cabbage"] and self.current_side["goat"] != self.current_side["boat"]) or \
-                (self.current_side["wolf"] == self.current_side["goat"] and self.current_side["wolf"] != self.current_side["boat"]):
-            self.status_label.setText("Неверный ход! Один из предметов съеден.")
-        else:
-            self.status_label.setText("Выберите объект для перемещения.")
+    def restart_game(self):
+        self.initialize_game()
 
 
 if __name__ == "__main__":
