@@ -17,7 +17,8 @@ class MainWindow(QMainWindow):
         self.btn_wolf_left.clicked.connect(lambda: self.put_in_boat("wolf", "left"))
 
         self.btn_goat_left = QPushButton("Коза", self)
-        self.btn_goat_left.setGeometry(150, 90, 100, 30)
+        self.btn_goat_left.setStyleSheet("QPushButton{background-image: url(image_49.png)}")
+        self.btn_goat_left.setGeometry(150, 90, 200, 200)
         self.btn_goat_left.clicked.connect(lambda: self.put_in_boat("goat", "left"))
 
         self.btn_cabbage_left = QPushButton("Капуста", self)
