@@ -8,6 +8,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Игра: Волк, коза и капуста")
         self.setGeometry(100, 100, 400, 250)
+        self.setStyleSheet("background-image: url(471419-reka-dlya-detey-1.jpg)")
 
         self.status_label = QLabel("Перевезите волка, козу и капусту на другой берег, нажимая на объект, затем 'Перевезти'.", self)
         self.status_label.setGeometry(20, 20, 360, 50)
@@ -155,4 +156,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec_())    
